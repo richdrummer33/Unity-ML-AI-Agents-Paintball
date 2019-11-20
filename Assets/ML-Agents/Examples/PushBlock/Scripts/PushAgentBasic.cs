@@ -91,6 +91,7 @@ public class PushAgentBasic : Agent
             AddVectorObs(m_RayPer.Perceive(rayDistance, m_RayAngles, m_DetectableObjects, 1.5f, 0f));
             AddVectorObs(hopperAmmoLeft);
             AddVectorObs(totalAmmoLeft);
+            AddVectorObs(isReloading);
         }
     }
 
@@ -136,22 +137,10 @@ public class PushAgentBasic : Agent
     GameObject[] addedCover;
     private void ResetCover()
     {
-        // Clear last set of additional cover objs
+        // Clear last set of spawned cover objs
         foreach (GameObject c in addedCover)
         {
             Destroy(c);
-        }
-
-        // Make new possible cover objs - only one agent should do this
-        if (coverPrefab)
-        {
-            int amtNewCover = Mathf.RoundToInt(Random.Range(0, 4));
-            addedCover = new GameObject[amtNewCover];
-
-            for (int i = 0; i < amtNewCover; i++)
-            {
-                addedCover[i] = Instantiate(coverPrefab, transform.root);
-            }
         }
 
         // Set new cover positions
@@ -160,17 +149,18 @@ public class PushAgentBasic : Agent
             c.transform.position = GetRandomSpawnPos();
         }
 
+        // Spawn new possible cover objs - only one agent should do this
         if (coverPrefab)
-            foreach (GameObject c in addedCover)
+        {
+            int amtNewCover = Mathf.RoundToInt(Random.Range(0, 4));
+            addedCover = new GameObject[amtNewCover];
+
+            for (int i = 0; i < amtNewCover; i++)
             {
-                if (Random.Range(0f, 1f) > 0.5f)
-                {
-                    c.transform.rotation *= Quaternion.Euler(90f, 0f, 0f);
-                    if (Random.Range(0f, 1f) > 0.5f)
-                        c.transform.rotation *= Quaternion.Euler(0f, 90f, 0f);
-                }
-                c.transform.position = GetRandomSpawnPos();
+                addedCover[i] = Instantiate(coverPrefab, Vector3.zero + Vector3.up * 10f, coverPrefab.transform.rotation, transform.root); // Spawn away from things
+                addedCover[i].transform.position = GetRandomSpawnPos();
             }
+        }
     }
 
     public void Hit()
@@ -285,6 +275,7 @@ public class PushAgentBasic : Agent
                     if (!isReloading)
                     {
                         StartCoroutine(Reload());
+                        AddReward(-(float)hopperAmmoLeft/hopperSize * 0.5f);
                     }
                     break;
             }
@@ -334,6 +325,35 @@ public class PushAgentBasic : Agent
         m_AgentRenderer.material = m_AgentMaterial;
         hopperAmmoLeft = 20;
         isReloading = false;
+    }
+
+    float refillTime = 3f;
+    float atReloadStation;
+    bool refilling;
+
+    public void StartRefillAmmo()
+    {
+        if(!refilling)
+        {
+            StartCoroutine(RefillAmmo());
+        }
+    }
+
+    public void StopRefillAmmo()
+    {
+        refilling = false;
+    }
+
+    private IEnumerator RefillAmmo()
+    {
+        refilling = true;
+
+        while (refilling && totalAmmoLeft < ammoSize)
+        {
+            yield return new WaitForSeconds(3f / hopperSize);
+
+            totalAmmoLeft = Mathf.CeilToInt(Mathf.Clamp(totalAmmoLeft + 1, 0f, ammoSize));
+        }
     }
 
     public override float[] Heuristic()
