@@ -76,6 +76,8 @@ public class PushAgentBasic : Agent
 
         hopperAmmoLeft = hopperSize;
 
+        addedCover = new GameObject[0];
+
         SetResetParameters();
     }
 
@@ -130,12 +132,45 @@ public class PushAgentBasic : Agent
         StartCoroutine(GoalScoredSwapGroundMaterial(m_Academy.goalScoredMaterial, 0.5f));
     }
 
+    public GameObject coverPrefab;
+    GameObject[] addedCover;
     private void ResetCover()
     {
-        foreach(GameObject c in cover)
+        // Clear last set of additional cover objs
+        foreach (GameObject c in addedCover)
+        {
+            Destroy(c);
+        }
+
+        // Make new possible cover objs - only one agent should do this
+        if (coverPrefab)
+        {
+            int amtNewCover = Mathf.RoundToInt(Random.Range(0, 4));
+            addedCover = new GameObject[amtNewCover];
+
+            for (int i = 0; i < amtNewCover; i++)
+            {
+                addedCover[i] = Instantiate(coverPrefab, transform.root);
+            }
+        }
+
+        // Set new cover positions
+        foreach (GameObject c in cover)
         {
             c.transform.position = GetRandomSpawnPos();
         }
+
+        if (coverPrefab)
+            foreach (GameObject c in addedCover)
+            {
+                if (Random.Range(0f, 1f) > 0.5f)
+                {
+                    c.transform.rotation *= Quaternion.Euler(90f, 0f, 0f);
+                    if (Random.Range(0f, 1f) > 0.5f)
+                        c.transform.rotation *= Quaternion.Euler(0f, 90f, 0f);
+                }
+                c.transform.position = GetRandomSpawnPos();
+            }
     }
 
     public void Hit()
@@ -321,6 +356,7 @@ public class PushAgentBasic : Agent
         }
         return new float[] { 0 };
     }
+
 
     /// <summary>
     /// In the editor, if "Reset On Done" is checked then AgentReset() will be

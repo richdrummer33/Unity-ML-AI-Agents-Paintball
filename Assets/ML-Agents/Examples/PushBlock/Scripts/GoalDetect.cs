@@ -20,8 +20,9 @@ public class GoalDetect : MonoBehaviour
         // Touched goal.
         if (col.gameObject.CompareTag("agent") && col.gameObject != agent.gameObject)
         {
-            agent.ScoredAGoal();
             col.gameObject.GetComponent<PushAgentBasic>().Hit();
+
+            agent.ScoredAGoal();
         }
 
         Destroy(this.gameObject);
