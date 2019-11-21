@@ -166,7 +166,7 @@ public class PushAgentBasic : Agent
     public void Hit()
     {
         // We use a reward of 5.
-        AddReward(-3.5f);
+        AddReward(-4f);
 
         ResetCover();
 
@@ -307,7 +307,7 @@ public class PushAgentBasic : Agent
         else
         {
             Done();
-
+            AddReward(-4f);
             // Swap ground material for a bit to indicate we scored.
             StartCoroutine(GoalScoredSwapGroundMaterial(m_Academy.goalScoredMaterial, 0.5f));
         }
