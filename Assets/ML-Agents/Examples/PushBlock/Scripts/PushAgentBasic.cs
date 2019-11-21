@@ -356,27 +356,103 @@ public class PushAgentBasic : Agent
         }
     }
 
+    public bool useGamepad;
     public override float[] Heuristic()
     {
-        if (Input.GetKey(KeyCode.D))
-        {
-            return new float[] { 3 };
-        }
-        if (Input.GetKey(KeyCode.W))
-        {
-            return new float[] { 1 };
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            return new float[] { 4 };
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            return new float[] { 2 };
-        }
-        return new float[] { 0 };
-    }
+        var action = new float[3];
 
+        // ----- Move ----- //
+        if (!useGamepad) // KB
+        {
+            if (Input.GetKey(KeyCode.W))
+            {
+                action[0] = 1;
+            }
+            else if (Input.GetKey(KeyCode.S))
+            {
+                action[0] = 2;
+            }
+            else if (Input.GetKey(KeyCode.A))
+            {
+                action[0] = 3;
+            }
+            else if (Input.GetKey(KeyCode.D))
+            {
+                action[0] = 4;
+            }
+            else
+                action[0] = 0;
+        }
+        else // Gamepad
+        {
+            if (Input.GetAxis("Axis 2") < -0.2f)
+            {
+                action[0] = 1;
+            }
+            else if (Input.GetAxis("Axis 2") > 0.2f)
+            {
+                action[0] = 2;
+            }
+            else if (Input.GetAxis("Axis 1") < -0.2f)
+            {
+                action[0] = 3;
+            }
+            else if (Input.GetAxis("Axis 1") > 0.2f)
+            {
+                action[0] = 4;
+            }
+            else
+                action[0] = 0;
+        }
+        // ----- Move ----- //
+
+
+        // ----- Turn ----- //
+        if (!useGamepad)
+        {
+            if (Input.GetKey(KeyCode.RightArrow))
+            {
+                action[1] = 1;
+            }
+            else if (Input.GetKey(KeyCode.LeftArrow))
+            {
+                action[1] = 2;
+            }
+            else
+                action[1] = 0;
+        }
+        else
+        {
+            if (Input.GetAxis("Axis 4") > 0.2f)
+            {
+                action[1] = 1;
+            }
+            else if (Input.GetAxis("Axis 4") < -0.2f)
+            {
+                action[1] = 2;
+            }
+            else
+                action[1] = 0;
+        }
+        // ----- Turn ----- //
+
+
+        // ----- Shoot ----- //
+        if (Input.GetKey(KeyCode.UpArrow) || Input.GetAxis("Axis 3") > 0.2f) // Bumper trigger Axis
+        {
+            action[2] = 1;
+        }
+        else if (Input.GetKey(KeyCode.Space) || Input.GetButton("Fire1")) // Reload (X-button on pad)
+        {
+            action[2] = 2;
+        }
+        else
+            action[2] = 0;
+        // ----- Shoot ----- //
+
+
+        return action;
+    }
 
     /// <summary>
     /// In the editor, if "Reset On Done" is checked then AgentReset() will be

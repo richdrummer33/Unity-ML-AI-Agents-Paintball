@@ -814,7 +814,7 @@ MonoBehaviour:
     vectorActionSize: 03000000030000000300000003000000
     vectorActionDescriptions: []
     vectorActionSpaceType: 0
-  m_Model: {fileID: 5022602860645237092, guid: d542d37f120a7bc4ea5cbc6a282d1d5d, type: 3}
+  m_Model: {fileID: 0}
   m_InferenceDevice: 0
   m_UseHeuristic: 0
   m_BehaviorName: PushBlock
@@ -856,6 +856,7 @@ MonoBehaviour:
   hopperSize: 20
   hopperAmmoLeft: 0
   totalAmmoLeft: 0
+  useGamepad: 1
 --- !u!114 &114421647563711602
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2268,7 +2269,7 @@ MonoBehaviour:
     vectorActionSize: 03000000030000000300000003000000
     vectorActionDescriptions: []
     vectorActionSpaceType: 0
-  m_Model: {fileID: 5022602860645237092, guid: d542d37f120a7bc4ea5cbc6a282d1d5d, type: 3}
+  m_Model: {fileID: 0}
   m_InferenceDevice: 0
   m_UseHeuristic: 0
   m_BehaviorName: PushBlock
@@ -2310,6 +2311,7 @@ MonoBehaviour:
   hopperSize: 20
   hopperAmmoLeft: 0
   totalAmmoLeft: 0
+  useGamepad: 1
 --- !u!114 &3346915151672916604
 MonoBehaviour:
   m_ObjectHideFlags: 0
