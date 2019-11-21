@@ -238,11 +238,14 @@ public class PushAgentBasic : Agent
     }
 
     int actionStep;
+    float lastTime;
     /// <summary>
     /// Called every step of the engine. Here the agent takes an action.
     /// </summary>
     public override void AgentAction(float[] vectorAction, string textAction)
     {
+        Debug.Log("rate = " + 1 / (Time.time - lastTime));
+        lastTime = Time.time;
         // Move the agent using the action.
         MoveAgent(vectorAction);
 
@@ -297,15 +300,13 @@ public class PushAgentBasic : Agent
             GameObject inst = Instantiate(projectilePrefab, transform.position + transform.forward, Quaternion.identity, null);
             inst.GetComponent<Rigidbody>().AddForce(transform.forward * 25f, ForceMode.Impulse);
             inst.GetComponent<GoalDetect>().agent = this;
-            AddReward(-2.5f / ammoSize);
+            //AddReward(-2.5f / ammoSize);
             totalAmmoLeft--;
             hopperAmmoLeft--;
         }
         else
         {
             Done();
-
-            AddReward(-2.5f / ammoSize);
 
             // Swap ground material for a bit to indicate we scored.
             StartCoroutine(GoalScoredSwapGroundMaterial(m_Academy.goalScoredMaterial, 0.5f));
