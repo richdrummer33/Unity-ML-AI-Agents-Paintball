@@ -814,7 +814,7 @@ MonoBehaviour:
     vectorActionSize: 03000000030000000300000003000000
     vectorActionDescriptions: []
     vectorActionSpaceType: 0
-  m_Model: {fileID: 0}
+  m_Model: {fileID: 5022602860645237092, guid: d1b90f7a66ebcf14db9c444976212d23, type: 3}
   m_InferenceDevice: 0
   m_UseHeuristic: 0
   m_BehaviorName: PushBlock
@@ -2269,7 +2269,7 @@ MonoBehaviour:
     vectorActionSize: 03000000030000000300000003000000
     vectorActionDescriptions: []
     vectorActionSpaceType: 0
-  m_Model: {fileID: 0}
+  m_Model: {fileID: 5022602860645237092, guid: d1b90f7a66ebcf14db9c444976212d23, type: 3}
   m_InferenceDevice: 0
   m_UseHeuristic: 0
   m_BehaviorName: PushBlock

@@ -85,7 +85,7 @@ public class PushAgentBasic : Agent
     {
         if (useVectorObs)
         {
-            var rayDistance = 12f;
+            var rayDistance = 32.5f;
 
             AddVectorObs(m_RayPer.Perceive(rayDistance, m_RayAngles, m_DetectableObjects, 0f, 0f));
             AddVectorObs(m_RayPer.Perceive(rayDistance, m_RayAngles, m_DetectableObjects, 1.5f, 0f));
@@ -304,13 +304,13 @@ public class PushAgentBasic : Agent
             totalAmmoLeft--;
             hopperAmmoLeft--;
         }
-        else
+        /*else
         {
             Done();
-            AddReward(-4f);
+            AddReward(-2.5f); // AddReward(-4f);
             // Swap ground material for a bit to indicate we scored.
             StartCoroutine(GoalScoredSwapGroundMaterial(m_Academy.goalScoredMaterial, 0.5f));
-        }
+        }*/
     }
 
     float reloadTime = 3f;
