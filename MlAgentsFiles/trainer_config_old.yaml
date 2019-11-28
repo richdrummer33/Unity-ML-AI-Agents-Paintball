@@ -37,47 +37,6 @@ Bouncer:
     hidden_units: 64
 
 PushBlock:
-    use_curiosity: true
-    max_steps: 1.0e6
-    batch_size: 128
-    buffer_size: 2048
-    beta: 1.0e-2
-    hidden_units: 256
-    summary_freq: 2000
-    time_horizon: 128
-    num_layers: 2
-    reward_signals:
-        extrinsic:
-            strength: 1.0
-            gamma: 0.99
-        curiosity:
-            strength: 0.005
-            gamma: 0.99
-            encoding_size: 256
-
-#Also a NotSoGoodResult_TheyJustSpinAroundAndDontShoot_TheBuggers!
-PushBlock:
-    use_curiosity: true
-    max_steps: 1.0e6
-    batch_size: 128
-    buffer_size: 2048
-    beta: 1.0e-2
-    hidden_units: 256
-    summary_freq: 2000
-    time_horizon: 64
-    num_layers: 2
-    reward_signals:
-        extrinsic:
-            strength: 1.0
-            gamma: 0.99
-        curiosity:
-            strength: 0.005
-            gamma: 0.99
-            encoding_size: 256
-
-#NotSoGoodResult_TheyJustSpinAroundAndDontShoot_TheBuggers
-PushBlockNotSoGoodResult:
-    use_curiousity: true
     use_recurrent: true
     sequence_length: 64
     num_layers: 2
@@ -89,14 +48,6 @@ PushBlockNotSoGoodResult:
     summary_freq: 2000
     time_horizon: 64
     num_layers: 2
-    reward_signals:
-        extrinsic:
-            strength: 1.0
-            gamma: 0.99
-        curiosity:
-            strength: 0.005
-            gamma: 0.99
-            encoding_size: 256
 
 PushBlockPaintball:
     use_recurrent: true
