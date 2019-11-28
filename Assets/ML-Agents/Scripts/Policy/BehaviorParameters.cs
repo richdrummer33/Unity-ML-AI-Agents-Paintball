@@ -31,6 +31,11 @@ namespace MLAgents
             get { return m_BehaviorName; }
         }
 
+        public bool UsingHeuristic()
+        {
+            return m_UseHeuristic;
+        }
+
         public IPolicy GeneratePolicy(Func<float[]> heuristic)
         {
             if (m_UseHeuristic)

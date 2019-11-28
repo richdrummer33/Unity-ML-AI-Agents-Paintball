@@ -10,6 +10,7 @@ TagManager:
   - block
   - wall
   - cover
+  - projectile
   layers:
   - Default
   - TransparentFX

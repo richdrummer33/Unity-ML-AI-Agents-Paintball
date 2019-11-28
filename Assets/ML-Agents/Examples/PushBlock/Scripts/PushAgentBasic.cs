@@ -41,6 +41,8 @@ public class PushAgentBasic : Agent
 
     public GameObject[] cover;
 
+    BehaviorParameters behavior;
+
     void Awake()
     {
         m_Academy = FindObjectOfType<PushBlockAcademy>(); //cache the academy
@@ -77,6 +79,8 @@ public class PushAgentBasic : Agent
         hopperAmmoLeft = hopperSize;
 
         addedCover = new GameObject[0];
+
+        behavior = GetComponent<BehaviorParameters>();
 
         SetResetParameters();
     }
@@ -184,6 +188,8 @@ public class PushAgentBasic : Agent
         m_GroundRenderer.material = m_GroundMaterial;
     }
 
+    
+
     /// <summary>
     /// Moves the agent according to the selected action.
     /// </summary>
@@ -194,28 +200,40 @@ public class PushAgentBasic : Agent
 
         var action = Mathf.FloorToInt(act[0]);
 
+        Vector3 dir;
+
+        if(!behavior.UsingHeuristic())
+            dir = transform.forward;
+        else
+            dir = Vector3.forward;
+
         // Fwd/back 
         switch (action)
         {
             case 1:
-                dirToGo = transform.forward * 1f;
+                dirToGo = dir * 1f;
                 break;
             case 2:
-                dirToGo = transform.forward * -1f;
+                dirToGo = dir * -1f;
                 break;
         }
 
 
         action = Mathf.FloorToInt(act[1]);
 
+        if (!behavior.UsingHeuristic())
+            dir = transform.right;
+        else
+            dir = Vector3.right;
+
         // Left/right strafe
         switch (action)
         {
             case 1:
-                dirToGo = transform.right * -0.75f;
+                dirToGo = dir * -0.75f;
                 break;
             case 2:
-                dirToGo = transform.right * 0.75f;
+                dirToGo = dir * 0.75f;
                 break;
         }
 
@@ -244,13 +262,13 @@ public class PushAgentBasic : Agent
     /// </summary>
     public override void AgentAction(float[] vectorAction, string textAction)
     {
-        Debug.Log("rate = " + 1 / (Time.time - lastTime));
+        //Debug.Log("rate = " + 1 / (Time.time - lastTime));
         lastTime = Time.time;
         // Move the agent using the action.
         MoveAgent(vectorAction);
 
         // Penalty given each step to encourage agent to finish task quickly.
-        AddReward(-1f / agentParameters.maxStep);
+        AddReward(-1f / agentParameters.maxStep / 2f);
 
         AssessGunAction(vectorAction[3]);
     }
@@ -357,10 +375,24 @@ public class PushAgentBasic : Agent
         }
     }
 
+    public void NearMiss(float distance)
+    {
+        float norm = (3f - distance) / 2.5f; // 3m is the radius of the Quad/plane, and subtract 0.5f from denominator to acct for radius of the agent
+
+        float score = Mathf.Clamp(norm * 0.05f, 0f, 0.05f); // 1/16f == 0.0625 * 80 == 5f i.e. a hit. Clamped just in case, really. Ideal world, not necessary
+        
+        AddReward(score);
+    }
+
+    public void TotalMiss()
+    {
+        //AddReward(-0.005f);
+    }
+
     public bool useGamepad;
     public override float[] Heuristic()
     {
-        var action = new float[3];
+        var action = new float[4];
 
         // ----- Move ----- //
         if (!useGamepad) // KB
@@ -375,11 +407,11 @@ public class PushAgentBasic : Agent
             }
             else if (Input.GetKey(KeyCode.A))
             {
-                action[0] = 3;
+                action[1] = 1;
             }
             else if (Input.GetKey(KeyCode.D))
             {
-                action[0] = 4;
+                action[1] = 2;
             }
             else
                 action[0] = 0;
@@ -394,16 +426,19 @@ public class PushAgentBasic : Agent
             {
                 action[0] = 2;
             }
-            else if (Input.GetAxis("Axis 1") < -0.2f)
+            else
+                action[0] = 0;
+
+            if (Input.GetAxis("Axis 1") < -0.2f)
             {
-                action[0] = 3;
+                action[1] = 1;
             }
             else if (Input.GetAxis("Axis 1") > 0.2f)
             {
-                action[0] = 4;
+                action[1] = 2;
             }
             else
-                action[0] = 0;
+                action[1] = 0;
         }
         // ----- Move ----- //
 
@@ -426,14 +461,14 @@ public class PushAgentBasic : Agent
         {
             if (Input.GetAxis("Axis 4") > 0.2f)
             {
-                action[1] = 1;
+                action[2] = 1;
             }
             else if (Input.GetAxis("Axis 4") < -0.2f)
             {
-                action[1] = 2;
+                action[2] = 2;
             }
             else
-                action[1] = 0;
+                action[2] = 0;
         }
         // ----- Turn ----- //
 
@@ -441,14 +476,14 @@ public class PushAgentBasic : Agent
         // ----- Shoot ----- //
         if (Input.GetKey(KeyCode.UpArrow) || Input.GetAxis("Axis 3") > 0.2f) // Bumper trigger Axis
         {
-            action[2] = 1;
+            action[3] = 1;
         }
         else if (Input.GetKey(KeyCode.Space) || Input.GetButton("Fire1")) // Reload (X-button on pad)
         {
-            action[2] = 2;
+            action[3] = 2;
         }
         else
-            action[2] = 0;
+            action[3] = 0;
         // ----- Shoot ----- //
 
 
@@ -471,6 +506,9 @@ public class PushAgentBasic : Agent
 
         totalAmmoLeft = ammoSize;
         hopperAmmoLeft = hopperSize;
+
+        //totalAmmoLeft = Mathf.RoundToInt(ammoSize * Random.Range(0.125f, 1f));
+        //hopperAmmoLeft = Mathf.Clamp(hopperSize, hopperSize, totalAmmoLeft);
 
         SetResetParameters();
     }
