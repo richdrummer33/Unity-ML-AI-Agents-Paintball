@@ -4,26 +4,23 @@ using UnityEngine;
 
 public class NearMissDetector : MonoBehaviour
 {
-    public Transform enemyAgent;
+    public PushAgentBasic enemyAgent;
     public PushAgentBasic thisAgent; 
-    
-    void Update()
-    {
-        transform.LookAt(enemyAgent);
-    }
 
     private void OnTriggerEnter(Collider other)
     {
-        GoalDetect detect = other.GetComponent<GoalDetect>();
+        GoalDetect paintball = other.GetComponent<GoalDetect>();
 
-        if (detect)
+        if (paintball)
         {
-            if(detect.agent == enemyAgent)
+            if(paintball.agent.gameObject == enemyAgent.gameObject)
             {
-                thisAgent.NearMiss(Vector3.Distance(other.transform.position, thisAgent.transform.position));
+                float distance = Vector3.Distance(paintball.transform.position, transform.position);
+                enemyAgent.NearMiss(distance);
+                Debug.Log("near miss distance " + distance + " from " + thisAgent.gameObject.name);
             }
 
-            detect.NearMissDetected();
+            paintball.NearMissDetected();
         }
     }
 }

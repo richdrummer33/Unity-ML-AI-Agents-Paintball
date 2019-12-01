@@ -43,6 +43,10 @@ public class PushAgentBasic : Agent
 
     BehaviorParameters behavior;
 
+    GlobalParamResetController resetController;
+
+    float rewardMultiplier = 1f;
+
     void Awake()
     {
         m_Academy = FindObjectOfType<PushBlockAcademy>(); //cache the academy
@@ -71,7 +75,6 @@ public class PushAgentBasic : Agent
         for (int i = 0; i < m_RayAngles.Length; i++)
         {
             m_RayAngles[i] = minAngle + i * rayAngleStep;
-            Debug.Log("m_RayAngles " + m_RayAngles);
         }
 
         m_AgentMaterial = m_AgentRenderer.material;
@@ -81,6 +84,8 @@ public class PushAgentBasic : Agent
         addedCover = new GameObject[0];
 
         behavior = GetComponent<BehaviorParameters>();
+
+        resetController = transform.root.GetComponent<GlobalParamResetController>();
 
         SetResetParameters();
     }
@@ -102,10 +107,12 @@ public class PushAgentBasic : Agent
     /// <summary>
     /// Use the ground's bounds to pick a random spawn position.
     /// </summary>
-    public Vector3 GetRandomSpawnPos()
+    public Vector3 GetRandomSpawnPos(bool isAnAgent)
     {
         var foundNewSpawnLocation = false;
         var randomSpawnPos = Vector3.zero;
+        int numAttempts = 0;
+
         while (foundNewSpawnLocation == false)
         {
             var randomPosX = Random.Range(-areaBounds.extents.x * m_Academy.spawnAreaMarginMultiplier,
@@ -113,11 +120,17 @@ public class PushAgentBasic : Agent
 
             var randomPosZ = Random.Range(-areaBounds.extents.z * m_Academy.spawnAreaMarginMultiplier,
                 areaBounds.extents.z * m_Academy.spawnAreaMarginMultiplier);
+
             randomSpawnPos = ground.transform.position + new Vector3(randomPosX, 1f, randomPosZ);
-            if (Physics.CheckBox(randomSpawnPos, new Vector3(2.5f, 0.01f, 2.5f)) == false)
+
+            if (Physics.CheckBox(randomSpawnPos, new Vector3(2f, 0.01f, 2f)) == false)
             {
                 foundNewSpawnLocation = true;
             }
+            numAttempts++;
+
+            if(numAttempts > 20)
+                foundNewSpawnLocation = true;
         }
         return randomSpawnPos;
     }
@@ -128,13 +141,21 @@ public class PushAgentBasic : Agent
     public void ScoredAGoal()
     {
         // We use a reward of 5.
-        AddReward(5f);
+        AddReward(5f * rewardMultiplier);
 
         // By marking an agent as done AgentReset() will be called automatically.
-        Done();
+
+        StartCoroutine(DelayedDone());
 
         // Swap ground material for a bit to indicate we scored.
         StartCoroutine(GoalScoredSwapGroundMaterial(m_Academy.goalScoredMaterial, 0.5f));
+    }
+
+    IEnumerator DelayedDone()
+    {
+        yield return new WaitForSeconds(0.1f);
+
+        Done();
     }
 
     public GameObject coverPrefab;
@@ -150,7 +171,7 @@ public class PushAgentBasic : Agent
         // Set new cover positions
         foreach (GameObject c in cover)
         {
-            c.transform.position = GetRandomSpawnPos();
+            c.transform.position = GetRandomSpawnPos(false);
         }
 
         // Spawn new possible cover objs - only one agent should do this
@@ -162,7 +183,7 @@ public class PushAgentBasic : Agent
             for (int i = 0; i < amtNewCover; i++)
             {
                 addedCover[i] = Instantiate(coverPrefab, Vector3.zero + Vector3.up * 10f, coverPrefab.transform.rotation, transform.root); // Spawn away from things
-                addedCover[i].transform.position = GetRandomSpawnPos();
+                addedCover[i].transform.position = GetRandomSpawnPos(false);
             }
         }
     }
@@ -170,12 +191,12 @@ public class PushAgentBasic : Agent
     public void Hit()
     {
         // We use a reward of 5.
-        AddReward(-4f);
+        AddReward(-4f * rewardMultiplier);
 
         ResetCover();
 
         // By marking an agent as done AgentReset() will be called automatically.
-        Done();
+        StartCoroutine(DelayedDone());
     }
 
     /// <summary>
@@ -268,7 +289,7 @@ public class PushAgentBasic : Agent
         MoveAgent(vectorAction);
 
         // Penalty given each step to encourage agent to finish task quickly.
-        AddReward(-1f / agentParameters.maxStep / 2f);
+        AddReward(-1f / agentParameters.maxStep / 2f * rewardMultiplier);
 
         AssessGunAction(vectorAction[3]);
     }
@@ -296,7 +317,8 @@ public class PushAgentBasic : Agent
                     if (!isReloading)
                     {
                         StartCoroutine(Reload());
-                        AddReward(-(float)hopperAmmoLeft/hopperSize * 0.5f);
+                        AddReward(-Mathf.Clamp((float)hopperAmmoLeft/hopperSize * 0.5f, (float)1f / hopperSize, 1f) * rewardMultiplier);
+                        
                     }
                     break;
             }
@@ -318,7 +340,7 @@ public class PushAgentBasic : Agent
             GameObject inst = Instantiate(projectilePrefab, transform.position + transform.forward, Quaternion.identity, null);
             inst.GetComponent<Rigidbody>().AddForce(transform.forward * 25f, ForceMode.Impulse);
             inst.GetComponent<GoalDetect>().agent = this;
-            //AddReward(-2.5f / ammoSize);
+            AddReward(-0.005f * rewardMultiplier); //AddReward(-2.5f / ammoSize); // Added -0.005 to account for NearMiss rewards
             totalAmmoLeft--;
             hopperAmmoLeft--;
         }
@@ -377,16 +399,22 @@ public class PushAgentBasic : Agent
 
     public void NearMiss(float distance)
     {
-        float norm = (3f - distance) / 2.5f; // 3m is the radius of the Quad/plane, and subtract 0.5f from denominator to acct for radius of the agent
+        float norm = (5f - distance) / 4.25f; // 5m is the radius of the pball's trigger sense sphere, and subtract 0.75f from denominator to acct for radius of the agent plus 0.25f of fudge distance (radius of paintball)
 
-        float score = Mathf.Clamp(norm * 0.05f, 0f, 0.05f); // 1/16f == 0.0625 * 80 == 5f i.e. a hit. Clamped just in case, really. Ideal world, not necessary
-        
-        AddReward(score);
+        // Min clamp to 0.005 to account for negative reward when firing
+        float score = Mathf.Clamp(norm * 0.05f, 0.005f, 0.05f); // 1/16f == 0.0625 * 80 == 5f i.e. a hit. Clamped just in case, really. Ideal world, not necessary
+
+        AddReward(score * rewardMultiplier);
     }
 
     public void TotalMiss()
     {
-        //AddReward(-0.005f);
+        AddReward(-0.025f * rewardMultiplier); // -2f for 80 shots
+
+        if (!behavior.UsingHeuristic())
+        {
+            Debug.Log("TotalMiss");
+        }
     }
 
     public bool useGamepad;
@@ -500,15 +528,15 @@ public class PushAgentBasic : Agent
         var rotationAngle = rotation * 90f;
         area.transform.Rotate(new Vector3(0f, rotationAngle, 0f));
 
-        transform.position = GetRandomSpawnPos();
+        transform.position = GetRandomSpawnPos(true);
         m_AgentRb.velocity = Vector3.zero;
         m_AgentRb.angularVelocity = Vector3.zero;
 
-        totalAmmoLeft = ammoSize;
-        hopperAmmoLeft = hopperSize;
+        //totalAmmoLeft = ammoSize;
+        //hopperAmmoLeft = hopperSize;
 
-        //totalAmmoLeft = Mathf.RoundToInt(ammoSize * Random.Range(0.125f, 1f));
-        //hopperAmmoLeft = Mathf.Clamp(hopperSize, hopperSize, totalAmmoLeft);
+        totalAmmoLeft = Mathf.RoundToInt(ammoSize * Random.Range(0.125f, 1f));
+        hopperAmmoLeft = Mathf.Clamp(hopperSize, 0, totalAmmoLeft);
 
         SetResetParameters();
     }

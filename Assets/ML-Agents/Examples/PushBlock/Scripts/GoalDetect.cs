@@ -15,6 +15,7 @@ public class GoalDetect : MonoBehaviour
     [HideInInspector]
     public PushAgentBasic agent;
     bool nearMiss = false;
+    public float minDist = Mathf.Infinity;
 
     void OnCollisionEnter(Collision col)
     {
@@ -28,8 +29,12 @@ public class GoalDetect : MonoBehaviour
 
         if (!nearMiss)
         {
-            Debug.Log("TotalMiss");
-            agent.TotalMiss();
+            //agent.TotalMiss();
+        }
+
+        if (minDist != Mathf.Infinity)
+        {
+            agent.NearMiss(minDist);
         }
 
         Destroy(this.gameObject);
@@ -37,7 +42,6 @@ public class GoalDetect : MonoBehaviour
 
     public void NearMissDetected()
     {
-        Debug.Log("NearMissDetected");
         nearMiss = true;
     }
 }
