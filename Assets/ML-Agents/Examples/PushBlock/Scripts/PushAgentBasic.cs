@@ -518,6 +518,7 @@ public class PushAgentBasic : Agent
         return action;
     }
 
+    public bool randomAmmoOnSpawn;
     /// <summary>
     /// In the editor, if "Reset On Done" is checked then AgentReset() will be
     /// called automatically anytime we mark done = true in an agent script.
@@ -535,8 +536,16 @@ public class PushAgentBasic : Agent
         //totalAmmoLeft = ammoSize;
         //hopperAmmoLeft = hopperSize;
 
-        totalAmmoLeft = Mathf.RoundToInt(ammoSize * Random.Range(0.125f, 1f));
-        hopperAmmoLeft = Mathf.Clamp(hopperSize, 0, totalAmmoLeft);
+        if (randomAmmoOnSpawn)
+        {
+            totalAmmoLeft = Mathf.RoundToInt(ammoSize * Random.Range(0.125f, 1f));
+            hopperAmmoLeft = Mathf.Clamp(hopperSize, 0, totalAmmoLeft);
+        }
+        else
+        {
+            totalAmmoLeft = ammoSize;
+            hopperAmmoLeft = hopperSize;
+        }
 
         SetResetParameters();
     }
