@@ -98,10 +98,11 @@ public class PushAgentBasic : Agent
 
             AddVectorObs(m_RayPer.Perceive(rayDistance, m_RayAngles, m_DetectableObjects, 0f, 0f));
             AddVectorObs(m_RayPer.Perceive(rayDistance, m_RayAngles, m_DetectableObjects, 1.5f, 0f));
-            AddVectorObs(hopperAmmoLeft);
-            AddVectorObs(totalAmmoLeft);
-            AddVectorObs(isReloading);
         }
+
+        AddVectorObs(hopperAmmoLeft);
+        AddVectorObs(totalAmmoLeft);
+        AddVectorObs(isReloading);
     }
 
     /// <summary>
@@ -149,6 +150,8 @@ public class PushAgentBasic : Agent
 
         // Swap ground material for a bit to indicate we scored.
         StartCoroutine(GoalScoredSwapGroundMaterial(m_Academy.goalScoredMaterial, 0.5f));
+
+        UiController._instance.OpponentHit(behavior.UsingHeuristic());
     }
 
     IEnumerator DelayedDone()
@@ -317,7 +320,7 @@ public class PushAgentBasic : Agent
                     if (!isReloading)
                     {
                         StartCoroutine(Reload());
-                        AddReward(-Mathf.Clamp((float)hopperAmmoLeft/hopperSize * 0.5f, (float)1f / hopperSize, 1f) * rewardMultiplier);
+                        AddReward(-Mathf.Clamp((float)hopperAmmoLeft/hopperSize * 0.5f, 0f, 1f) * rewardMultiplier);
                         
                     }
                     break;
@@ -353,6 +356,14 @@ public class PushAgentBasic : Agent
         }*/
     }
 
+    private void Update()
+    {
+        if (behavior.UsingHeuristic())
+        {
+            UiController._instance.hopperAmmo = hopperAmmoLeft;
+        }
+    }
+
     float reloadTime = 3f;
     bool isReloading;
 
@@ -366,6 +377,11 @@ public class PushAgentBasic : Agent
         m_AgentRenderer.material = m_AgentMaterial;
         hopperAmmoLeft = 20;
         isReloading = false;
+
+        if (behavior.UsingHeuristic())
+        {
+            UiController._instance.totalAmmo = totalAmmoLeft;
+        }
     }
 
     float refillTime = 3f;
@@ -545,6 +561,12 @@ public class PushAgentBasic : Agent
         {
             totalAmmoLeft = ammoSize;
             hopperAmmoLeft = hopperSize;
+        }
+
+        if (behavior.UsingHeuristic())
+        {
+            UiController._instance.totalAmmo = totalAmmoLeft;
+            UiController._instance.hopperAmmo = hopperAmmoLeft;
         }
 
         SetResetParameters();

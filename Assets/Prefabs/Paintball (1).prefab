@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6753348388451930135}
   - component: {fileID: 7254130780927413432}
   - component: {fileID: 7748887181490108831}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ProxyDetect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -68,7 +68,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2541765346484567164}
   - component: {fileID: 6513530485282615972}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Trail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -208,7 +208,7 @@ GameObject:
   - component: {fileID: 1033808265890969196}
   - component: {fileID: 8660740713175333574}
   - component: {fileID: 4633649361392801697}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Paintball (1)
   m_TagString: projectile
   m_Icon: {fileID: 0}
