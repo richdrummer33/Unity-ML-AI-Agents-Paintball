@@ -343,7 +343,7 @@ public class PushAgentBasic : Agent
             GameObject inst = Instantiate(projectilePrefab, transform.position + transform.forward, Quaternion.identity, null);
             inst.GetComponent<Rigidbody>().AddForce(transform.forward * 25f, ForceMode.Impulse);
             inst.GetComponent<GoalDetect>().agent = this;
-            AddReward(-0.005f * rewardMultiplier); //AddReward(-2.5f / ammoSize); // Added -0.005 to account for NearMiss rewards
+            AddReward(-0.0075f * rewardMultiplier); //AddReward(-2.5f / ammoSize); // Added -0.005 to account for NearMiss rewards
             totalAmmoLeft--;
             hopperAmmoLeft--;
         }
