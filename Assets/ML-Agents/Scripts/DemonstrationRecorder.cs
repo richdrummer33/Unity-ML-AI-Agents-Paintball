@@ -16,6 +16,8 @@ namespace MLAgents
         private DemonstrationStore m_DemoStore;
         public const int MaxNameLength = 16;
 
+        float duration = 0f;
+
         private void Start()
         {
             if (Application.isEditor && record)
@@ -30,6 +32,8 @@ namespace MLAgents
             {
                 InitializeDemoStore();
             }
+
+            duration += Time.deltaTime;
         }
 
         /// <summary>
@@ -68,7 +72,7 @@ namespace MLAgents
         /// </summary>
         public void WriteExperience(AgentInfo info)
         {
-            m_DemoStore.Record(info);
+            m_DemoStore.Record(info, duration);
         }
 
         /// <summary>

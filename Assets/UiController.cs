@@ -14,7 +14,7 @@ public class UiController : MonoBehaviour
     int playerScoreCt;
     int agentScoreCt;
     public int hopperAmmo;
-    public int totalAmmo;
+    public int reserveAmmo;
 
     string playerText;
     string agentText;
@@ -32,7 +32,7 @@ public class UiController : MonoBehaviour
 
     private void Update()
     {
-        ammo.text = ammotext + hopperAmmo + " / " + totalAmmo;
+        ammo.text = ammotext + hopperAmmo + " / " + reserveAmmo;
     }
 
 

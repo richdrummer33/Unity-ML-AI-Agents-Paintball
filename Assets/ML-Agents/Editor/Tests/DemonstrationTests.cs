@@ -57,7 +57,7 @@ namespace MLAgents.Tests
                 textObservation = "TestAction",
             };
 
-            demoStore.Record(agentInfo);
+            demoStore.Record(agentInfo, 0f);
             demoStore.Close();
         }
     }

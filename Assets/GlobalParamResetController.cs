@@ -13,6 +13,8 @@ public class GlobalParamResetController : MonoBehaviour
     {
         var academy = FindObjectOfType<Academy>();
         academy.AgentForceReset += _AgentReset;
+
+        rot = transform.rotation; // Buig it's getting spun 90 degrees?
     }
 
     void _AgentReset()
@@ -20,9 +22,12 @@ public class GlobalParamResetController : MonoBehaviour
         ammoStartSizeModifier = Random.Range(0.0125f, 1f);
     }
 
+    Quaternion rot;
+
     // Update is called once per frame
     void Update()
     {
-        
+        if (transform.rotation != rot)
+            transform.rotation = rot;
     }
 }

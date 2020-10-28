@@ -49,6 +49,7 @@ namespace MLAgents
             if (!m_FileSystem.Directory.Exists(k_DemoDirecory))
             {
                 m_FileSystem.Directory.CreateDirectory(k_DemoDirecory);
+                UnityEngine.Debug.Log("Demo Path: " + k_DemoDirecory);
             }
         }
 
@@ -58,7 +59,7 @@ namespace MLAgents
         private void CreateDemonstrationFile(string demonstrationName)
         {
             // Creates demonstration file.
-            var literalName = demonstrationName;
+            var literalName = demonstrationName + "_" + duration / 60f + "min";
             m_FilePath = k_DemoDirecory + literalName + k_ExtensionType;
             var uniqueNameCounter = 0;
             while (m_FileSystem.File.Exists(m_FilePath))
@@ -85,11 +86,13 @@ namespace MLAgents
             brainProto.WriteDelimitedTo(m_Writer);
         }
 
+        float duration;
         /// <summary>
         /// Write AgentInfo experience to file.
         /// </summary>
-        public void Record(AgentInfo info)
+        public void Record(AgentInfo info, float duration)
         {
+            this.duration = duration;
             // Increment meta-data counters.
             m_MetaData.numberExperiences++;
             m_CumulativeReward += info.reward;

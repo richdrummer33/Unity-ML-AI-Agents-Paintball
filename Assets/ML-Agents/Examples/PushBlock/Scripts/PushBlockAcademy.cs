@@ -43,8 +43,32 @@ public class PushBlockAcademy : Academy
     /// </summary>
     public float gravityMultiplier;
 
+    public GameObject[] npcOpponents;
+    int index = 0;
+
     void State()
     {
         Physics.gravity *= gravityMultiplier;
+    }
+
+    public override void AcademyReset()
+    {
+        base.AcademyReset();
+    }
+
+    public void KillConfirmed()
+    {
+        int lastIndex = index;
+        if (npcOpponents.Length > 1)
+        {
+            index = Random.Range(0, npcOpponents.Length - 1);
+
+            if (index != lastIndex)
+            {
+                npcOpponents[lastIndex].SetActive(false);
+
+                npcOpponents[index].SetActive(true);
+            }
+        }
     }
 }

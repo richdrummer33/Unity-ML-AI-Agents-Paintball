@@ -10,7 +10,7 @@ public class PushAgentBasic : Agent
     /// <summary>
     /// The ground. The bounds are used to spawn the elements.
     /// </summary>
-    public GameObject ground;
+    public GameObject ground, spawnZone;
 
     public GameObject area;
 
@@ -47,9 +47,13 @@ public class PushAgentBasic : Agent
 
     float rewardMultiplier = 1f;
 
+    Vector3 startPos;
+    [SerializeField] float maxSpawnDist = 5f;
+
     void Awake()
     {
         m_Academy = FindObjectOfType<PushBlockAcademy>(); //cache the academy
+        startPos = transform.position;
     }
 
     public override void InitializeAgent()
@@ -101,18 +105,25 @@ public class PushAgentBasic : Agent
         }
 
         AddVectorObs(hopperAmmoLeft);
-        AddVectorObs(totalAmmoLeft);
+        AddVectorObs(reserveAmmoLeft);
         AddVectorObs(isReloading);
     }
 
     /// <summary>
     /// Use the ground's bounds to pick a random spawn position.
     /// </summary>
-    public Vector3 GetRandomSpawnPos(bool isAnAgent)
+    public Vector3 GetRandomSpawnPos(bool isAnAgent, Bounds areaBounds, GameObject ground)
     {
         var foundNewSpawnLocation = false;
         var randomSpawnPos = Vector3.zero;
         int numAttempts = 0;
+
+        Vector3 spawnBox;
+
+        if (isAnAgent)
+            spawnBox = new Vector3(2f, 1f, 2f);
+        else
+            spawnBox = new Vector3(2f, 1f, 2f);
 
         while (foundNewSpawnLocation == false)
         {
@@ -124,13 +135,13 @@ public class PushAgentBasic : Agent
 
             randomSpawnPos = ground.transform.position + new Vector3(randomPosX, 1f, randomPosZ);
 
-            if (Physics.CheckBox(randomSpawnPos, new Vector3(2f, 0.01f, 2f)) == false)
+            if (Physics.CheckBox(randomSpawnPos, spawnBox) == false)
             {
                 foundNewSpawnLocation = true;
             }
             numAttempts++;
 
-            if(numAttempts > 20)
+            if (numAttempts > 25)
                 foundNewSpawnLocation = true;
         }
         return randomSpawnPos;
@@ -152,6 +163,9 @@ public class PushAgentBasic : Agent
         StartCoroutine(GoalScoredSwapGroundMaterial(m_Academy.goalScoredMaterial, 0.5f));
 
         UiController._instance.OpponentHit(behavior.UsingHeuristic());
+
+        //if (cover.Length > 0 && Random.value > 0.5f)
+          //  ResetCover();
     }
 
     IEnumerator DelayedDone()
@@ -159,6 +173,8 @@ public class PushAgentBasic : Agent
         yield return new WaitForSeconds(0.1f);
 
         Done();
+
+        m_Academy.KillConfirmed();
     }
 
     public GameObject coverPrefab;
@@ -174,7 +190,7 @@ public class PushAgentBasic : Agent
         // Set new cover positions
         foreach (GameObject c in cover)
         {
-            c.transform.position = GetRandomSpawnPos(false);
+            c.transform.position = GetRandomSpawnPos(false, ground.GetComponent<Collider>().bounds, ground);
         }
 
         // Spawn new possible cover objs - only one agent should do this
@@ -186,7 +202,7 @@ public class PushAgentBasic : Agent
             for (int i = 0; i < amtNewCover; i++)
             {
                 addedCover[i] = Instantiate(coverPrefab, Vector3.zero + Vector3.up * 10f, coverPrefab.transform.rotation, transform.root); // Spawn away from things
-                addedCover[i].transform.position = GetRandomSpawnPos(false);
+                addedCover[i].transform.position = GetRandomSpawnPos(false, ground.GetComponent<Collider>().bounds, ground);
             }
         }
     }
@@ -196,7 +212,8 @@ public class PushAgentBasic : Agent
         // We use a reward of 5.
         AddReward(-4f * rewardMultiplier);
 
-        ResetCover();
+       // if(cover.Length > 0 && Random.value > 0.5f)
+         //   ResetCover();
 
         // By marking an agent as done AgentReset() will be called automatically.
         StartCoroutine(DelayedDone());
@@ -274,8 +291,12 @@ public class PushAgentBasic : Agent
                 break;
         }
 
+        float speedMod = 1f;
+        if (isReloading)
+            speedMod = 0.66f;
+
         transform.Rotate(rotateDir, Time.fixedDeltaTime * 200f);
-        m_AgentRb.AddForce(dirToGo * m_Academy.agentRunSpeed,
+        m_AgentRb.AddForce(dirToGo * m_Academy.agentRunSpeed * speedMod,
             ForceMode.VelocityChange);
     }
 
@@ -329,22 +350,22 @@ public class PushAgentBasic : Agent
     }
 
     public GameObject projectilePrefab;
-    public int ammoSize = 80;
+    public int reserveAmmoSize = 80;
     public int hopperSize = 20;
     [SerializeField]
     int hopperAmmoLeft;
     [SerializeField]
-    int totalAmmoLeft;
+    int reserveAmmoLeft;
 
     void  Fire()
     {
-        if (totalAmmoLeft > 0)
+        if (reserveAmmoLeft > 0)
         {
             GameObject inst = Instantiate(projectilePrefab, transform.position + transform.forward, Quaternion.identity, null);
             inst.GetComponent<Rigidbody>().AddForce(transform.forward * 25f, ForceMode.Impulse);
             inst.GetComponent<GoalDetect>().agent = this;
             AddReward(-0.0075f * rewardMultiplier); //AddReward(-2.5f / ammoSize); // Added -0.005 to account for NearMiss rewards
-            totalAmmoLeft--;
+            //reserveAmmoLeft--;
             hopperAmmoLeft--;
         }
         /*else
@@ -375,13 +396,15 @@ public class PushAgentBasic : Agent
         yield return new WaitForSeconds(reloadTime);
 
         m_AgentRenderer.material = m_AgentMaterial;
-        hopperAmmoLeft = 20;
+
+        int reloadQty = Mathf.Min(hopperSize - hopperAmmoLeft, reserveAmmoLeft);
+        reserveAmmoLeft -= reloadQty;
+        hopperAmmoLeft += reloadQty;
+
         isReloading = false;
 
         if (behavior.UsingHeuristic())
-        {
-            UiController._instance.totalAmmo = totalAmmoLeft;
-        }
+            UiController._instance.reserveAmmo = reserveAmmoLeft;
     }
 
     float refillTime = 3f;
@@ -405,11 +428,14 @@ public class PushAgentBasic : Agent
     {
         refilling = true;
 
-        while (refilling && totalAmmoLeft < ammoSize)
+        while (refilling && reserveAmmoLeft < reserveAmmoSize)
         {
-            yield return new WaitForSeconds(3f / hopperSize);
+            yield return new WaitForSeconds(1.33f); // (3f / hopperSize);
 
-            totalAmmoLeft = Mathf.CeilToInt(Mathf.Clamp(totalAmmoLeft + 1, 0f, ammoSize));
+            reserveAmmoLeft = Mathf.Clamp(reserveAmmoLeft + 5, 0, reserveAmmoSize);
+
+            if (behavior.UsingHeuristic())
+                UiController._instance.reserveAmmo = reserveAmmoLeft;
         }
     }
 
@@ -534,7 +560,10 @@ public class PushAgentBasic : Agent
         return action;
     }
 
-    public bool randomAmmoOnSpawn;
+    public bool randomAmmoOnSpawn = false;
+    public bool dontResetAmmo = false;
+    bool canReset = true;
+    bool isInitRound = true;
     /// <summary>
     /// In the editor, if "Reset On Done" is checked then AgentReset() will be
     /// called automatically anytime we mark done = true in an agent script.
@@ -545,31 +574,42 @@ public class PushAgentBasic : Agent
         var rotationAngle = rotation * 90f;
         area.transform.Rotate(new Vector3(0f, rotationAngle, 0f));
 
-        transform.position = GetRandomSpawnPos(true);
+        if(!isInitRound)
+            transform.position = GetRandomSpawnPos(true, spawnZone.GetComponent<Collider>().bounds, spawnZone);
         m_AgentRb.velocity = Vector3.zero;
         m_AgentRb.angularVelocity = Vector3.zero;
 
+        isInitRound = false;
         //totalAmmoLeft = ammoSize;
         //hopperAmmoLeft = hopperSize;
 
-        if (randomAmmoOnSpawn)
+        if (canReset)
         {
-            totalAmmoLeft = Mathf.RoundToInt(ammoSize * Random.Range(0.125f, 1f));
-            hopperAmmoLeft = Mathf.Clamp(hopperSize, 0, totalAmmoLeft);
-        }
-        else
-        {
-            totalAmmoLeft = ammoSize;
-            hopperAmmoLeft = hopperSize;
-        }
+            if (randomAmmoOnSpawn)
+            {
+                reserveAmmoLeft = Mathf.RoundToInt(reserveAmmoSize * Random.Range(0.125f, 1f));
+                hopperAmmoLeft = Mathf.Clamp(hopperSize, 0, reserveAmmoLeft);
+            }
+            else
+            {
+                reserveAmmoLeft = reserveAmmoSize;
+                hopperAmmoLeft = hopperSize;
+            }
 
+            if (dontResetAmmo)
+                canReset = false;
+        }
+       
         if (behavior.UsingHeuristic())
         {
-            UiController._instance.totalAmmo = totalAmmoLeft;
+            UiController._instance.reserveAmmo = reserveAmmoLeft;
             UiController._instance.hopperAmmo = hopperAmmoLeft;
         }
 
         SetResetParameters();
+
+        if (cover.Length > 0 && Random.value > 0.5f)
+            ResetCover();
     }
 
     public void SetGroundMaterialFriction()
